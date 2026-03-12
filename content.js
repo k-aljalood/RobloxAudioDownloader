@@ -2,7 +2,7 @@
 
 (() => {
   const getMainAudioElement = () => document.querySelector('audio');
-  const getAudioPlayers = () => Array.from(document.querySelectorAll('div[data-test-id="audioPlayer"]'));
+  const getAudioPlayers = () => Array.from(document.querySelectorAll('div[data-test-id="audioPlayer"], div[data-testid="PLAYWRIGHT_audioPlayer"]'));
   const getAudioRow = (player) => player.closest('div[data-testid="audioRow"]');
   const getAudioElement = (player) => player.querySelector('audio');
   const getAudioSource = (audio) => audio?.currentSrc || '';

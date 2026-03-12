@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Roblox Audio Downloader",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Download audio directly from Roblox asset pages with one click.",
   "host_permissions": [
     "https://create.roblox.com/*"
