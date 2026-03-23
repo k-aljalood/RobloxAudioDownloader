@@ -3,10 +3,17 @@
 (() => {
   const getMainAudioElement = () => document.querySelector('audio');
   const getAudioPlayers = () => Array.from(document.querySelectorAll('div[data-test-id="audioPlayer"], div[data-testid="PLAYWRIGHT_audioPlayer"]'));
-  const getAudioRow = (player) => player.closest('div[data-testid="audioRow"]');
+  const getAudioRow = (player) => player.closest('div[data-testid="audioRow"], div[data-testid="audioRowDeprecated"]');
   const getAudioElement = (player) => player.querySelector('audio');
   const getAudioSource = (audio) => audio?.currentSrc || '';
   const isBlobUrl = (url) => url?.startsWith('blob:');
+
+  const getChartsContainer = () => document.querySelector('div[class*="1nnmove"]');
+  const getChartsName = () =>
+    document.querySelector('span[class*="Typography-h6"] + span')?.textContent?.trim()
+    || document.querySelector('span[class*="Typography-h6"]')?.nextSibling?.textContent?.trim()
+    || document.title?.trim()
+    || 'roblox-audio';
 
   const getFileName = (audioRow) =>
     audioRow?.querySelector('span[class*="assetName"]')?.textContent?.trim()
@@ -14,10 +21,14 @@
     || document.title?.trim()
     || 'roblox-audio';
 
-  const createDownloadButton = (audioRow, isSideAudio, referenceButton) => {
+  const createDownloadButton = (audioRow, isSideAudio, referenceButton, isCharts) => {
     const button = document.createElement('button');
 
-    if (isSideAudio) {
+    if (isCharts) {
+      button.className =
+        'MuiButtonBase-root MuiIconButton-root web-blox-css-tss-13gs37d-IconButton-root MuiIconButton-colorInherit MuiIconButton-edgeStart MuiIconButton-sizeLarge web-blox-css-mui-d0f6mv';
+      button.setAttribute('aria-label', 'download');
+    } else if (isSideAudio) {
       button.className =
         'MuiButtonBase-root MuiIconButton-root web-blox-css-tss-jxjuu4-IconButton-root-saveIconButton MuiIconButton-colorSecondary web-blox-css-tss-3p25jb-IconButton-colorSecondary MuiIconButton-sizeMedium web-blox-css-mui-1h2q8ec';
       button.setAttribute('aria-label', 'saveButton');
@@ -31,10 +42,10 @@
     }
 
     button.type = 'button';
-    button.setAttribute('data-testid', 'downloadButton');
+    button.setAttribute('data-testid', isCharts ? 'chartsDownloadButton' : 'downloadButton');
 
     button.innerHTML = `
-      <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium web-blox-css-mui-12kqpzp"
+      <svg class="MuiSvgIcon-root ${isCharts ? 'MuiSvgIcon-fontSizeLarge web-blox-css-mui-1dnx15j' : 'MuiSvgIcon-fontSizeMedium web-blox-css-mui-12kqpzp'}"
         focusable="false"
         aria-hidden="true"
         viewBox="0 -960 960 960">
@@ -58,13 +69,13 @@
     button.onclick = async () => {
       const audio = audioRow ? audioRow.querySelector('audio') : getMainAudioElement();
       if (!audio || !isBlobUrl(getAudioSource(audio))) return;
-      await handleAudioDownload(button, audio, audioRow);
+      await handleAudioDownload(button, audio, audioRow, isCharts);
     };
 
     return button;
   };
 
-  const handleAudioDownload = async (button, audio, audioRow) => {
+  const handleAudioDownload = async (button, audio, audioRow, isCharts) => {
     const audioSource = getAudioSource(audio);
     button.disabled = true;
 
@@ -75,7 +86,7 @@
 
       const link = Object.assign(document.createElement('a'), {
         href: URL.createObjectURL(audioBlob),
-        download: `${getFileName(audioRow)}.ogg`,
+        download: `${isCharts ? getChartsName() : getFileName(audioRow)}.ogg`,
       });
 
       document.body.appendChild(link);
@@ -131,6 +142,21 @@
     });
   };
 
+  const insertChartsButton = () => {
+    const container = getChartsContainer();
+    if (!container) return;
+
+    if (container.querySelector('[data-testid="chartsDownloadButton"]')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'MuiGrid-root MuiGrid-item web-blox-css-mui-1wxaqej';
+
+    const button = createDownloadButton(null, false, null, true);
+    wrapper.appendChild(button);
+
+    container.prepend(wrapper);
+  };
+
   const removeMainButtonIfUnavailable = () => {
     const container =
       document.querySelector('[data-testid="heading-button-row"]')
@@ -147,6 +173,7 @@
   const insertDownloadButtons = () => {
     insertMainButton();
     insertSideButtons();
+    insertChartsButton();
     removeMainButtonIfUnavailable();
   };
 
